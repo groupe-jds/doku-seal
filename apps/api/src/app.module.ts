@@ -4,6 +4,9 @@ import { ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { EnvelopesModule } from './modules/envelopes/envelopes.module';
+import { RecipientsModule } from './modules/recipients/recipients.module';
+import { FieldsModule } from './modules/fields/fields.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -29,6 +32,9 @@ import { AppService } from './app.service';
 
     // Feature modules
     AuthModule,
+    EnvelopesModule,
+    RecipientsModule,
+    FieldsModule,
   ],
   controllers: [AppController],
   providers: [
