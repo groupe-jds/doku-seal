@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import { env } from '@documenso/lib/utils/env';
+import { env } from '@doku-seal/lib/utils/env';
 import { signWithGCloud } from '@documenso/pdf-sign';
 
 import { addSigningPlaceholder } from '../helpers/add-signing-placeholder';

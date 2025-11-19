@@ -9,11 +9,11 @@ import { Loader } from 'lucide-react';
 import { type PDFDocumentProxy } from 'pdfjs-dist';
 import { Document as PDFDocument, Page as PDFPage, pdfjs } from 'react-pdf';
 
-import { NEXT_PUBLIC_WEBAPP_URL } from '@documenso/lib/constants/app';
+import { NEXT_PUBLIC_WEBAPP_URL } from '@doku-seal/lib/constants/app';
 // import 'react-pdf/dist/esm/Page/AnnotationLayer.css';
 // import 'react-pdf/dist/esm/Page/TextLayer.css';
-import { PDF_VIEWER_PAGE_SELECTOR } from '@documenso/lib/constants/pdf-viewer';
-import { getEnvelopeItemPdfUrl } from '@documenso/lib/utils/envelope-download';
+import { PDF_VIEWER_PAGE_SELECTOR } from '@doku-seal/lib/constants/pdf-viewer';
+import { getEnvelopeItemPdfUrl } from '@doku-seal/lib/utils/envelope-download';
 
 import { cn } from '../lib/utils';
 import { useToast } from './use-toast';
@@ -44,7 +44,7 @@ export type OnPDFViewerPageClick = (_event: {
 
 const PDFLoader = () => (
   <>
-    <Loader className="text-documenso h-12 w-12 animate-spin" />
+    <Loader className="text-doku-seal h-12 w-12 animate-spin" />
 
     <p className="text-muted-foreground mt-4">
       <Trans>Loading document...</Trans>

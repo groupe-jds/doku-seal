@@ -53,7 +53,7 @@ export default defineConfig({
     external: [
       '@node-rs/bcrypt',
       '@prisma/client',
-      '@documenso/tailwind-config',
+      '@doku-seal/tailwind-config',
       'playwright',
       'playwright-core',
       '@playwright/browser-chromium',
