@@ -2,11 +2,17 @@ import type { Context as HonoContext } from 'hono';
 import type { Context, Handler, InngestFunction } from 'inngest';
 import { Inngest as InngestClient } from 'inngest';
 import { serve as createHonoPagesRoute } from 'inngest/hono';
-import type { Logger } from 'inngest/middleware/logger';
 
 import { env } from '../../utils/env';
 import type { JobDefinition, JobRunIO, SimpleTriggerJobOptions } from './_internal/job';
 import { BaseJobProvider } from './base';
+
+type Logger = {
+  info: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
+  debug: (...args: unknown[]) => void;
+};
 
 export class InngestJobProvider extends BaseJobProvider {
   private static _instance: InngestJobProvider;
