@@ -3,7 +3,7 @@
   "pipeline": {
     "build": {
       "dependsOn": ["prebuild", "^build"],
-      "outputs": [".next/**", "!.next/cache/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "prebuild": {
       "cache": false,
@@ -14,6 +14,22 @@
     },
     "lint:fix": {
       "cache": false
+    },
+    "typecheck": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "test": {
+      "cache": false,
+      "dependsOn": ["^build"]
+    },
+    "test:watch": {
+      "cache": false,
+      "persistent": true
+    },
+    "test:cov": {
+      "cache": false,
+      "dependsOn": ["^build"]
     },
     "clean": {
       "cache": false
@@ -26,6 +42,10 @@
       "dependsOn": ["^build"],
       "cache": false,
       "persistent": true
+    },
+    "start:prod": {
+      "dependsOn": ["^build"],
+      "cache": false
     },
     "dev:test": {
       "cache": false

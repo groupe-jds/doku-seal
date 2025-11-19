@@ -1,0 +1,21 @@
+{
+  "name": "@doku-seal/database",
+  "version": "0.0.0",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "license": "MIT",
+  "scripts": {
+    "build": "prisma generate",
+    "clean": "rimraf node_modules",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@doku-seal/prisma": "*",
+    "@prisma/client": "^6.18.0"
+  },
+  "devDependencies": {
+    "@doku-seal/tsconfig": "*",
+    "prisma": "^6.18.0",
+    "typescript": "5.6.2"
+  }
+}
