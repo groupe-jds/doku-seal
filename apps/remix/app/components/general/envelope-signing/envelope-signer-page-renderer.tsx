@@ -212,7 +212,9 @@ export default function EnvelopeSignerPageRenderer() {
          * CHECKBOX FIELD.
          */
         .with({ type: FieldType.CHECKBOX }, (field) => {
-          const clickedCheckboxIndex = Number(target.getAttr('internalCheckboxIndex'));
+          const clickedCheckboxIndex = Number(
+            (target as Konva.Node).getAttr('internalCheckboxIndex'),
+          );
 
           if (Number.isNaN(clickedCheckboxIndex)) {
             return;
@@ -233,7 +235,7 @@ export default function EnvelopeSignerPageRenderer() {
          * RADIO FIELD.
          */
         .with({ type: FieldType.RADIO }, (field) => {
-          const selectedRadioIndex = Number(target.getAttr('internalRadioIndex'));
+          const selectedRadioIndex = Number((target as Konva.Node).getAttr('internalRadioIndex'));
           const fieldCustomText = Number(field.customText);
 
           if (Number.isNaN(selectedRadioIndex)) {

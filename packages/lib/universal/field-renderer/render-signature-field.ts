@@ -95,8 +95,14 @@ const createFieldSignature = (
         });
 
         img.onload = () => {
-          image.setAttrs({
-            ...getImageDimensions(img, fieldWidth, fieldHeight),
+          const dimensions = getImageDimensions(img, fieldWidth, fieldHeight);
+          image.setSize({
+            width: dimensions.width,
+            height: dimensions.height,
+          });
+          image.setPosition({
+            x: dimensions.x,
+            y: dimensions.y,
           });
         };
 

@@ -3,7 +3,7 @@ import sharp from 'sharp';
 import { getFileServerSide } from '@doku-seal/lib/universal/upload/get-file.server';
 import { prisma } from '@doku-seal/prisma';
 
-import type { Route } from './+types/branding.logo.team.$teamId';
+import type { Route } from './+types/branding.logo.organisation.$orgId';
 
 export async function loader({ params }: Route.LoaderArgs) {
   const organisationId = params.orgId;
