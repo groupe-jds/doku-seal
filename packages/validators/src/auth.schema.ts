@@ -24,11 +24,11 @@ export const SignUpSchema = z.object({
 export type SignUpDto = z.infer<typeof SignUpSchema>;
 
 // Reset Password
-export const ResetPasswordSchema = z.object({
+export const RequestResetPasswordSchema = z.object({
   email: z.string().email('Invalid email address'),
 });
 
-export type ResetPasswordDto = z.infer<typeof ResetPasswordSchema>;
+export type RequestResetPasswordDto = z.infer<typeof RequestResetPasswordSchema>;
 
 // Change Password
 export const ChangePasswordSchema = z.object({
