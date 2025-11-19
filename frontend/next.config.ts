@@ -5,7 +5,6 @@ const nextConfig: NextConfig = {
 
   experimental: {
     typedRoutes: true,
-    ppr: true, // Partial Prerendering
   },
 
   // Transpile shared packages
