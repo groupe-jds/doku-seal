@@ -11,7 +11,13 @@ const config: Config = {
   ],
   presets: [sharedConfig],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['var(--font-sans)', 'sans-serif'],
+        signature: ['var(--font-signature)', 'cursive'],
+        noto: ['var(--font-noto)', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 };

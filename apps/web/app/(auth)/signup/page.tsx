@@ -10,14 +10,6 @@ import { SignUpSchema, type SignUpDto } from '@doku-seal/validators';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -79,79 +71,95 @@ export default function SignUpPage() {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-        <CardDescription>
-          Enter your information to get started with Doku-Seal
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              type="text"
-              placeholder="John Doe"
-              {...register('name')}
-              disabled={isLoading}
-            />
-            {errors.name && (
-              <p className="text-sm text-red-500">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="name@example.com"
-              {...register('email')}
-              disabled={isLoading}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email.message}</p>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              {...register('password')}
-              disabled={isLoading}
-            />
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password.message}</p>
-            )}
-            <p className="text-xs text-gray-500">
-              Must contain at least 8 characters, including uppercase, lowercase, and a number
-            </p>
-          </div>
-
-          {error && (
-            <div className="rounded-md bg-red-50 p-3">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
-
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Creating account...' : 'Create account'}
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter>
-        <p className="text-sm text-gray-600 text-center w-full">
-          Already have an account?{' '}
-          <Link href="/signin" className="text-doku-seal hover:underline font-medium">
-            Sign in
-          </Link>
+    <div className="border-border dark:bg-background z-10 w-full rounded-xl border bg-neutral-100 p-6 shadow-sm">
+      <div>
+        <h1 className="text-2xl font-semibold">Create your account</h1>
+        <p className="text-muted-foreground mt-2 text-sm">
+          Sign up to start signing documents with Doku-Seal.
         </p>
-      </CardFooter>
-    </Card>
+      </div>
+
+      <hr className="border-border -mx-6 my-4" />
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="name" className="text-muted-foreground text-sm font-medium">
+            Full Name
+          </Label>
+          <Input
+            id="name"
+            type="text"
+            placeholder="John Doe"
+            autoComplete="name"
+            {...register('name')}
+            disabled={isLoading}
+            className="bg-background"
+          />
+          {errors.name && (
+            <p className="text-sm text-red-500">{errors.name.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-muted-foreground text-sm font-medium">
+            Email
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            {...register('email')}
+            disabled={isLoading}
+            className="bg-background"
+          />
+          {errors.email && (
+            <p className="text-sm text-red-500">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="password" className="text-muted-foreground text-sm font-medium">
+            Password
+          </Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Create a strong password"
+            autoComplete="new-password"
+            {...register('password')}
+            disabled={isLoading}
+            className="bg-background"
+          />
+          {errors.password && (
+            <p className="text-sm text-red-500">{errors.password.message}</p>
+          )}
+          <p className="text-muted-foreground text-xs">
+            Must be at least 8 characters with uppercase, lowercase, and a number
+          </p>
+        </div>
+
+        {error && (
+          <div className="bg-destructive/10 text-destructive rounded-md p-3">
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Creating account...' : 'Create Account'}
+        </Button>
+      </form>
+
+      <p className="text-muted-foreground mt-6 text-center text-sm">
+        Already have an account?{' '}
+        <Link href="/signin" className="text-doku-seal-700 dark:text-doku-seal-500 font-medium hover:underline">
+          Sign in
+        </Link>
+      </p>
+    </div>
   );
 }

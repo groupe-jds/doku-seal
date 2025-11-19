@@ -7,21 +7,24 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   RequestPasswordResetSchema,
-  ResetPasswordSchema,
   type RequestPasswordResetDto,
-  type ResetPasswordDto,
 } from '@doku-seal/validators';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+
+const NewPasswordSchema = z.object({
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      'Must contain uppercase, lowercase, and number'
+    ),
+});
+
+type NewPasswordDto = z.infer<typeof NewPasswordSchema>;
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -32,14 +35,12 @@ export default function ResetPasswordPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Form for requesting reset (no token)
   const requestForm = useForm<RequestPasswordResetDto>({
     resolver: zodResolver(RequestPasswordResetSchema),
   });
 
-  // Form for resetting password (with token)
-  const resetForm = useForm<Omit<ResetPasswordDto, 'token'>>({
-    resolver: zodResolver(ResetPasswordSchema.omit({ token: true })),
+  const resetForm = useForm<NewPasswordDto>({
+    resolver: zodResolver(NewPasswordSchema),
   });
 
   const onRequestReset = async (data: RequestPasswordResetDto) => {
@@ -75,7 +76,7 @@ export default function ResetPasswordPage() {
     }
   };
 
-  const onResetPassword = async (data: Omit<ResetPasswordDto, 'token'>) => {
+  const onResetPassword = async (data: NewPasswordDto) => {
     if (!token) return;
 
     setIsLoading(true);
@@ -116,99 +117,107 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">
-          {token ? 'Reset Password' : 'Forgot Password'}
-        </CardTitle>
-        <CardDescription>
+    <div className="border-border dark:bg-background z-10 w-full rounded-xl border bg-neutral-100 p-6 shadow-sm">
+      <div>
+        <h1 className="text-2xl font-semibold">
+          {token ? 'Reset your password' : 'Forgot your password?'}
+        </h1>
+        <p className="text-muted-foreground mt-2 text-sm">
           {token
             ? 'Enter your new password below'
-            : 'Enter your email to receive a password reset link'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {!token ? (
-          <form onSubmit={requestForm.handleSubmit(onRequestReset)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                {...requestForm.register('email')}
-                disabled={isLoading}
-              />
-              {requestForm.formState.errors.email && (
-                <p className="text-sm text-red-500">
-                  {requestForm.formState.errors.email.message}
-                </p>
-              )}
-            </div>
-
-            {error && (
-              <div className="rounded-md bg-red-50 p-3">
-                <p className="text-sm text-red-800">{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="rounded-md bg-green-50 p-3">
-                <p className="text-sm text-green-800">{success}</p>
-              </div>
-            )}
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Sending...' : 'Send Reset Link'}
-            </Button>
-          </form>
-        ) : (
-          <form onSubmit={resetForm.handleSubmit(onResetPassword)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">New Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...resetForm.register('password')}
-                disabled={isLoading}
-              />
-              {resetForm.formState.errors.password && (
-                <p className="text-sm text-red-500">
-                  {resetForm.formState.errors.password.message}
-                </p>
-              )}
-              <p className="text-xs text-gray-500">
-                Must contain at least 8 characters, including uppercase, lowercase, and a number
-              </p>
-            </div>
-
-            {error && (
-              <div className="rounded-md bg-red-50 p-3">
-                <p className="text-sm text-red-800">{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="rounded-md bg-green-50 p-3">
-                <p className="text-sm text-green-800">{success}</p>
-              </div>
-            )}
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? 'Resetting...' : 'Reset Password'}
-            </Button>
-          </form>
-        )}
-      </CardContent>
-      <CardFooter>
-        <p className="text-sm text-gray-600 text-center w-full">
-          Remember your password?{' '}
-          <Link href="/signin" className="text-doku-seal hover:underline font-medium">
-            Sign in
-          </Link>
+            : 'No worries, we will send you reset instructions'}
         </p>
-      </CardFooter>
-    </Card>
+      </div>
+
+      <hr className="border-border -mx-6 my-4" />
+
+      {!token ? (
+        <form onSubmit={requestForm.handleSubmit(onRequestReset)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email" className="text-muted-foreground text-sm font-medium">
+              Email
+            </Label>
+            <Input
+              id="email"
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+              {...requestForm.register('email')}
+              disabled={isLoading}
+              className="bg-background"
+            />
+            {requestForm.formState.errors.email && (
+              <p className="text-sm text-red-500">
+                {requestForm.formState.errors.email.message}
+              </p>
+            )}
+          </div>
+
+          {error && (
+            <div className="bg-destructive/10 text-destructive rounded-md p-3">
+              <p className="text-sm font-medium">{error}</p>
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400 rounded-md p-3">
+              <p className="text-sm font-medium">{success}</p>
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Sending...' : 'Send Reset Link'}
+          </Button>
+        </form>
+      ) : (
+        <form onSubmit={resetForm.handleSubmit(onResetPassword)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-muted-foreground text-sm font-medium">
+              New Password
+            </Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="Create a strong password"
+              autoComplete="new-password"
+              {...resetForm.register('password')}
+              disabled={isLoading}
+              className="bg-background"
+            />
+            {resetForm.formState.errors.password && (
+              <p className="text-sm text-red-500">
+                {resetForm.formState.errors.password.message}
+              </p>
+            )}
+            <p className="text-muted-foreground text-xs">
+              Must be at least 8 characters with uppercase, lowercase, and a number
+            </p>
+          </div>
+
+          {error && (
+            <div className="bg-destructive/10 text-destructive rounded-md p-3">
+              <p className="text-sm font-medium">{error}</p>
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-400 rounded-md p-3">
+              <p className="text-sm font-medium">{success}</p>
+            </div>
+          )}
+
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? 'Resetting...' : 'Reset Password'}
+          </Button>
+        </form>
+      )}
+
+      <p className="text-muted-foreground mt-6 text-center text-sm">
+        Remember your password?{' '}
+        <Link href="/signin" className="text-doku-seal-700 dark:text-doku-seal-500 font-medium hover:underline">
+          Sign in
+        </Link>
+      </p>
+    </div>
   );
 }

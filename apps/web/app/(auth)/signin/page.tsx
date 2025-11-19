@@ -10,14 +10,6 @@ import { SignInSchema, type SignInDto } from '@doku-seal/validators';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 
 export default function SignInPage() {
   const router = useRouter();
@@ -59,69 +51,82 @@ export default function SignInPage() {
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Sign in</CardTitle>
-        <CardDescription>
-          Enter your email and password to access your account
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="name@example.com"
-              {...register('email')}
-              disabled={isLoading}
-            />
-            {errors.email && (
-              <p className="text-sm text-red-500">{errors.email.message}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password">Password</Label>
-              <Link
-                href="/reset-password"
-                className="text-sm text-doku-seal hover:underline"
-              >
-                Forgot password?
-              </Link>
-            </div>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              {...register('password')}
-              disabled={isLoading}
-            />
-            {errors.password && (
-              <p className="text-sm text-red-500">{errors.password.message}</p>
-            )}
-          </div>
-
-          {error && (
-            <div className="rounded-md bg-red-50 p-3">
-              <p className="text-sm text-red-800">{error}</p>
-            </div>
-          )}
-
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Signing in...' : 'Sign in'}
-          </Button>
-        </form>
-      </CardContent>
-      <CardFooter>
-        <p className="text-sm text-gray-600 text-center w-full">
-          Don't have an account?{' '}
-          <Link href="/signup" className="text-doku-seal hover:underline font-medium">
-            Sign up
-          </Link>
+    <div className="border-border dark:bg-background z-10 w-full rounded-xl border bg-neutral-100 p-6 shadow-sm">
+      <div>
+        <h1 className="text-2xl font-semibold">Sign in to your account</h1>
+        <p className="text-muted-foreground mt-2 text-sm">
+          Welcome back, we are lucky to have you.
         </p>
-      </CardFooter>
-    </Card>
+      </div>
+
+      <hr className="border-border -mx-6 my-4" />
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-muted-foreground text-sm font-medium">
+            Email
+          </Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            {...register('email')}
+            disabled={isLoading}
+            className="bg-background"
+          />
+          {errors.email && (
+            <p className="text-sm text-red-500">{errors.email.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-muted-foreground text-sm font-medium">
+              Password
+            </Label>
+            <Link
+              href="/reset-password"
+              className="text-muted-foreground hover:text-foreground text-sm transition-colors"
+            >
+              Forgot password?
+            </Link>
+          </div>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            {...register('password')}
+            disabled={isLoading}
+            className="bg-background"
+          />
+          {errors.password && (
+            <p className="text-sm text-red-500">{errors.password.message}</p>
+          )}
+        </div>
+
+        {error && (
+          <div className="bg-destructive/10 text-destructive rounded-md p-3">
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
+
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Signing in...' : 'Sign In'}
+        </Button>
+      </form>
+
+      <p className="text-muted-foreground mt-6 text-center text-sm">
+        Don't have an account?{' '}
+        <Link href="/signup" className="text-doku-seal-700 dark:text-doku-seal-500 font-medium hover:underline">
+          Sign up
+        </Link>
+      </p>
+    </div>
   );
 }
