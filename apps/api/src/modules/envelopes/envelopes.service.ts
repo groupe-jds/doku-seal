@@ -248,6 +248,75 @@ export class EnvelopesService {
   }
 
   /**
+   * Upload a document to an envelope
+   */
+  async uploadDocument(
+    envelopeId: string,
+    userId: number,
+    teamId: number,
+    file: Express.Multer.File,
+  ) {
+    // Check if envelope exists and belongs to user
+    const envelope = await this.prisma.envelope.findFirst({
+      where: {
+        id: envelopeId,
+        userId,
+        teamId,
+        deletedAt: null,
+      },
+    });
+
+    if (!envelope) {
+      throw new NotFoundException('Envelope not found');
+    }
+
+    // Cannot upload if already sent
+    if (envelope.status !== 'DRAFT') {
+      throw new ForbiddenException('Cannot upload document to envelope that has been sent');
+    }
+
+    // Create document and documentData
+    const documentId = nanoid();
+    const documentDataId = nanoid();
+
+    const document = await this.prisma.document.create({
+      data: {
+        id: documentId,
+        documentDataId,
+        documentData: {
+          create: {
+            id: documentDataId,
+            type: 'BYTES_64',
+            data: file.buffer.toString('base64'),
+            initialData: file.buffer.toString('base64'),
+          },
+        },
+      },
+    });
+
+    // Link document to envelope via envelopeItem
+    await this.prisma.envelopeItem.create({
+      data: {
+        id: nanoid(),
+        envelopeId,
+        documentId,
+        order: 1,
+      },
+    });
+
+    // Update envelope with documentId
+    await this.prisma.envelope.update({
+      where: { id: envelopeId },
+      data: { documentId },
+    });
+
+    return {
+      message: 'Document uploaded successfully',
+      documentId,
+    };
+  }
+
+  /**
    * Send an envelope (change status to PENDING)
    */
   async send(envelopeId: string, userId: number, teamId: number) {

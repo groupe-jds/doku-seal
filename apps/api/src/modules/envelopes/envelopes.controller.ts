@@ -8,7 +8,10 @@ import {
   Param,
   Query,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
@@ -109,6 +112,22 @@ export class EnvelopesController {
   ) {
     const teamId = 1; // Hardcoded for now
     return this.envelopesService.remove(id, user.userId, teamId);
+  }
+
+  @Post(':id/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({ summary: 'Upload document to envelope' })
+  @ApiResponse({
+    status: 200,
+    description: 'Document uploaded successfully',
+  })
+  async uploadDocument(
+    @CurrentUser() user: any,
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const teamId = 1; // Hardcoded for now
+    return this.envelopesService.uploadDocument(id, user.userId, teamId, file);
   }
 
   @Post(':id/send')
