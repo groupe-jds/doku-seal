@@ -1,35 +1,46 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { signIn } from 'next-auth/react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { SignUpSchema, type SignUpDto } from '@doku-seal/validators';
+import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { PasswordInput } from '@/components/ui/password-input';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { useToast } from '@/components/ui/primitives/use-toast';
+
+const SignUpSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+});
+
+type SignUpFormData = z.infer<typeof SignUpSchema>;
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignUpDto>({
+  const form = useForm<SignUpFormData>({
     resolver: zodResolver(SignUpSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+    },
   });
 
-  const onSubmit = async (data: SignUpDto) => {
-    setIsLoading(true);
-    setError(null);
-
+  const onSubmit = async (data: SignUpFormData) => {
     try {
-      // Call signup endpoint
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/auth/signup`,
         {
@@ -38,128 +49,104 @@ export default function SignUpPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(data),
-        }
+        },
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to create account');
-        setIsLoading(false);
+        const error = await response.json();
+        toast({
+          title: 'Unable to create account',
+          description: error.message || 'Please try again later',
+          variant: 'destructive',
+        });
         return;
       }
 
-      // Auto sign in after successful signup
-      const result = await signIn('credentials', {
-        email: data.email,
-        password: data.password,
-        redirect: false,
+      toast({
+        title: 'Account created',
+        description: 'Please sign in with your credentials',
       });
 
-      if (result?.error) {
-        setError('Account created but failed to sign in. Please sign in manually.');
-        setIsLoading(false);
-        return;
-      }
-
-      // Redirect to dashboard on success
-      router.push('/dashboard');
-      router.refresh();
-    } catch (err) {
-      setError('An error occurred. Please try again.');
-      setIsLoading(false);
+      router.push('/signin');
+    } catch (error) {
+      toast({
+        title: 'An error occurred',
+        description: 'Please try again later',
+        variant: 'destructive',
+      });
     }
   };
 
+  const isSubmitting = form.formState.isSubmitting;
+
   return (
-    <div className="border-border dark:bg-background z-10 w-full rounded-xl border bg-neutral-100 p-6 shadow-sm">
-      <div>
+    <div className="w-screen max-w-lg px-4">
+      <div className="border-border bg-card z-10 rounded-xl border p-6">
         <h1 className="text-2xl font-semibold">Create your account</h1>
-        <p className="text-muted-foreground mt-2 text-sm">
-          Sign up to start signing documents with Doku-Seal.
+
+        <p className="text-muted-foreground mt-2 text-sm">Get started with Doku-Seal today.</p>
+
+        <hr className="border-border -mx-6 my-4" />
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-full flex-col gap-y-4">
+            <fieldset className="flex w-full flex-col gap-y-4" disabled={isSubmitting}>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input type="text" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <PasswordInput {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button type="submit" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? 'Creating account...' : 'Sign Up'}
+              </Button>
+            </fieldset>
+          </form>
+        </Form>
+
+        <p className="text-muted-foreground mt-6 text-center text-sm">
+          Already have an account?{' '}
+          <Link href="/signin" className="text-doku-seal-700 duration-200 hover:opacity-70">
+            Sign in
+          </Link>
         </p>
       </div>
-
-      <hr className="border-border -mx-6 my-4" />
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name" className="text-muted-foreground text-sm font-medium">
-            Full Name
-          </Label>
-          <Input
-            id="name"
-            type="text"
-            placeholder="John Doe"
-            autoComplete="name"
-            {...register('name')}
-            disabled={isLoading}
-            className="bg-background"
-          />
-          {errors.name && (
-            <p className="text-sm text-red-500">{errors.name.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-muted-foreground text-sm font-medium">
-            Email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="you@example.com"
-            autoComplete="email"
-            {...register('email')}
-            disabled={isLoading}
-            className="bg-background"
-          />
-          {errors.email && (
-            <p className="text-sm text-red-500">{errors.email.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-muted-foreground text-sm font-medium">
-            Password
-          </Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="Create a strong password"
-            autoComplete="new-password"
-            {...register('password')}
-            disabled={isLoading}
-            className="bg-background"
-          />
-          {errors.password && (
-            <p className="text-sm text-red-500">{errors.password.message}</p>
-          )}
-          <p className="text-muted-foreground text-xs">
-            Must be at least 8 characters with uppercase, lowercase, and a number
-          </p>
-        </div>
-
-        {error && (
-          <div className="bg-destructive/10 text-destructive rounded-md p-3">
-            <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
-
-        <Button
-          type="submit"
-          className="w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Creating account...' : 'Create Account'}
-        </Button>
-      </form>
-
-      <p className="text-muted-foreground mt-6 text-center text-sm">
-        Already have an account?{' '}
-        <Link href="/signin" className="text-doku-seal-700 dark:text-doku-seal-500 font-medium hover:underline">
-          Sign in
-        </Link>
-      </p>
     </div>
   );
 }

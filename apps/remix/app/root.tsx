@@ -69,7 +69,7 @@ export async function loader({ request }: Route.LoaderArgs) {
   return data(
     {
       lang,
-      theme: getTheme(),
+      theme: getTheme() ?? 'dark',
       session: session.isAuthenticated
         ? {
             user: session.user,

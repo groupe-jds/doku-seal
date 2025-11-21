@@ -1,18 +1,28 @@
 import type { NextConfig } from 'next';
+import path from 'path';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
   experimental: {
     typedRoutes: true,
+    // swcPlugins disabled due to Turbopack incompatibility
+    // swcPlugins: [
+    //   ['@lingui/swc-plugin', {}]
+    // ],
   },
 
   // Transpile shared packages
-  transpilePackages: [
-    '@doku-seal/ui',
-    '@doku-seal/validators',
-    '@doku-seal/shared',
-  ],
+  transpilePackages: ['@doku-seal/ui', '@doku-seal/validators', '@doku-seal/shared'],
+
+  // Webpack config for ~ alias
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '~': path.resolve(__dirname),
+    };
+    return config;
+  },
 
   // Images
   images: {
@@ -26,7 +36,7 @@ const nextConfig: NextConfig = {
   },
 
   // Headers for security
-  async headers() {
+  headers() {
     return [
       {
         source: '/:path*',
@@ -57,7 +67,7 @@ const nextConfig: NextConfig = {
   },
 
   // Redirects
-  async redirects() {
+  redirects() {
     return [
       {
         source: '/home',
