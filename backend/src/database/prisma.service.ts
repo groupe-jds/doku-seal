@@ -1,11 +1,16 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { PrismaClient } from '@doku-seal/database';
+import type { OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
+import { getDatabaseUrl } from '@doku-seal/prisma/helper';
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
+    // Ensure database URL is normalized before Prisma initialization
+    getDatabaseUrl();
+
     super({
       log: [
         { level: 'query', emit: 'event' },
@@ -31,7 +36,14 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   // Helper method for soft deletes
-  async softDelete(model: any, id: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/promise-function-async
+  softDelete(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    model: {
+      update: (args: { where: { id: string }; data: { deletedAt: Date } }) => Promise<unknown>;
+    },
+    id: string,
+  ) {
     return model.update({
       where: { id },
       data: { deletedAt: new Date() },
@@ -44,17 +56,18 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       throw new Error('Cannot clean database in production');
     }
 
-    const models = Object.keys(this).filter(
-      (key) => !key.startsWith('_') && !key.startsWith('$')
-    );
+    const models = Object.keys(this).filter((key) => !key.startsWith('_') && !key.startsWith('$'));
 
     return Promise.all(
-      models.map((modelKey) => {
+      models.map(async (modelKey) => {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         const model = this[modelKey as keyof PrismaService];
         if (model && typeof model === 'object' && 'deleteMany' in model) {
-          return (model as any).deleteMany();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/consistent-type-assertions
+          return (model as { deleteMany: () => Promise<unknown> }).deleteMany();
         }
-      })
+        return Promise.resolve(undefined);
+      }),
     );
   }
 }

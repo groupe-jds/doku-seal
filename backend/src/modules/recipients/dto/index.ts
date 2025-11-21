@@ -1,5 +1,5 @@
-import { AddRecipientSchema } from '@doku-seal/validators';
-import { z } from 'zod';
+import type { AddRecipientSchema } from '@doku-seal/validators';
+import type { z } from 'zod';
 
 export class AddRecipientDto implements z.infer<typeof AddRecipientSchema> {
   envelopeId: string;

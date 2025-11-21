@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service';
-import { CreateEnvelopeDto, UpdateEnvelopeDto, ListEnvelopesDto } from './dto';
+import type { PrismaService } from '../../database/prisma.service';
+import type { CreateEnvelopeDto, UpdateEnvelopeDto, ListEnvelopesDto } from './dto';
 import { nanoid } from 'nanoid';
+import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class EnvelopesService {
@@ -17,41 +18,56 @@ export class EnvelopesService {
     const documentMetaId = nanoid();
 
     // Create envelope with meta and recipients
-    const envelope = await this.prisma.envelope.create({
-      data: {
-        id: envelopeId,
-        secondaryId,
-        externalId: dto.externalId,
-        title: dto.title,
-        status: 'DRAFT',
-        source: 'DOCUMENT',
-        type: 'DOCUMENT',
-        visibility: dto.visibility,
-        internalVersion: 1,
-        userId,
-        teamId,
-        folderId: dto.folderId,
-        documentMetaId,
-        documentMeta: {
-          create: {
-            id: documentMetaId,
-            subject: dto.subject,
-            message: dto.message,
-            redirectUrl: dto.redirectUrl,
-            signingOrder: dto.signingOrder,
-            distributionMethod: dto.distributionMethod,
-          },
-        },
-        recipients: {
-          create: dto.recipients.map((recipient, index) => ({
-            id: nanoid(),
-            email: recipient.email,
-            name: recipient.name,
-            role: recipient.role,
-            signingOrder: dto.signingOrder === 'SEQUENTIAL' ? index + 1 : null,
-          })),
+    const envelopeData: Prisma.EnvelopeCreateInput = {
+      id: envelopeId,
+      secondaryId,
+      externalId: dto.externalId,
+      title: dto.title,
+      status: 'DRAFT' as const,
+      source: 'DOCUMENT' as const,
+      type: 'DOCUMENT' as const,
+      visibility: dto.visibility,
+      internalVersion: 1,
+      user: {
+        connect: {
+          id: userId,
         },
       },
+      team: {
+        connect: {
+          id: teamId,
+        },
+      },
+      documentMeta: {
+        create: {
+          id: documentMetaId,
+          subject: dto.subject,
+          message: dto.message,
+          redirectUrl: dto.redirectUrl,
+          signingOrder: dto.signingOrder,
+          distributionMethod: dto.distributionMethod,
+        },
+      },
+      recipients: {
+        create: dto.recipients.map((recipient, index) => ({
+          email: recipient.email,
+          name: recipient.name,
+          role: recipient.role,
+          token: nanoid(32),
+          signingOrder: dto.signingOrder === 'SEQUENTIAL' ? index + 1 : null,
+        })),
+      },
+      ...(dto.folderId && {
+        folder: {
+          connect: {
+            id: dto.folderId,
+          },
+        },
+      }),
+    };
+
+    const envelope = await this.prisma.envelope.create({
+      data: envelopeData,
       include: {
         recipients: true,
         documentMeta: true,
@@ -68,7 +84,7 @@ export class EnvelopesService {
     const { page, limit, status, folderId, search } = dto;
     const skip = (page - 1) * limit;
 
-    const where: any = {
+    const where: Prisma.EnvelopeWhereInput = {
       userId,
       teamId,
       deletedAt: null,
@@ -199,20 +215,49 @@ export class EnvelopesService {
       throw new ForbiddenException('Cannot update envelope that has been sent');
     }
 
+    const updateData: Prisma.EnvelopeUpdateInput = {};
+    if (dto.title) {
+      updateData.title = dto.title;
+    }
+    if (dto.visibility) {
+      updateData.visibility = dto.visibility;
+    }
+
+    // Handle folder relation
+    if (dto.folderId !== undefined) {
+      if (dto.folderId) {
+        updateData.folder = {
+          connect: {
+            id: dto.folderId,
+          },
+        };
+      } else {
+        updateData.folder = {
+          disconnect: true,
+        };
+      }
+    }
+
+    const documentMetaUpdate: Prisma.DocumentMetaUpdateInput = {};
+    if (dto.subject !== undefined) {
+      documentMetaUpdate.subject = dto.subject;
+    }
+    if (dto.message !== undefined) {
+      documentMetaUpdate.message = dto.message;
+    }
+    if (dto.redirectUrl !== undefined) {
+      documentMetaUpdate.redirectUrl = dto.redirectUrl;
+    }
+
+    if (Object.keys(documentMetaUpdate).length > 0) {
+      updateData.documentMeta = {
+        update: documentMetaUpdate,
+      };
+    }
+
     const envelope = await this.prisma.envelope.update({
       where: { id: envelopeId },
-      data: {
-        title: dto.title,
-        visibility: dto.visibility,
-        folderId: dto.folderId,
-        documentMeta: {
-          update: {
-            subject: dto.subject,
-            message: dto.message,
-            redirectUrl: dto.redirectUrl,
-          },
-        },
-      },
+      data: updateData,
       include: {
         recipients: true,
         documentMeta: true,
@@ -275,44 +320,33 @@ export class EnvelopesService {
       throw new ForbiddenException('Cannot upload document to envelope that has been sent');
     }
 
-    // Create document and documentData
-    const documentId = nanoid();
+    // Create documentData
     const documentDataId = nanoid();
 
-    const document = await this.prisma.document.create({
+    await this.prisma.documentData.create({
       data: {
-        id: documentId,
-        documentDataId,
-        documentData: {
-          create: {
-            id: documentDataId,
-            type: 'BYTES_64',
-            data: file.buffer.toString('base64'),
-            initialData: file.buffer.toString('base64'),
-          },
-        },
+        id: documentDataId,
+        type: 'BYTES_64',
+        data: file.buffer.toString('base64'),
+        initialData: file.buffer.toString('base64'),
       },
     });
 
-    // Link document to envelope via envelopeItem
-    await this.prisma.envelopeItem.create({
+    // Link documentData to envelope via envelopeItem
+    const envelopeItem = await this.prisma.envelopeItem.create({
       data: {
         id: nanoid(),
+        title: file.originalname || 'Document',
         envelopeId,
-        documentId,
+        documentDataId,
         order: 1,
       },
     });
 
-    // Update envelope with documentId
-    await this.prisma.envelope.update({
-      where: { id: envelopeId },
-      data: { documentId },
-    });
-
     return {
       message: 'Document uploaded successfully',
-      documentId,
+      documentDataId,
+      envelopeItemId: envelopeItem.id,
     };
   }
 

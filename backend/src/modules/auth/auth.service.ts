@@ -1,9 +1,17 @@
 import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../../database/prisma.service';
-import * as bcrypt from 'bcrypt';
+import type { JwtService } from '@nestjs/jwt';
+import type { PrismaService } from '../../database/prisma.service';
+import * as argon2 from 'argon2';
 import * as crypto from 'crypto';
-import { SignInDto, SignUpDto } from '@doku-seal/validators';
+import type { SignInDto, SignUpDto } from '@doku-seal/validators';
+
+type ValidatedUser = {
+  id: number;
+  email: string;
+  name: string;
+  roles: string[];
+  disabled: boolean;
+};
 
 @Injectable()
 export class AuthService {
@@ -15,7 +23,7 @@ export class AuthService {
   /**
    * Validate user credentials (used by Local Strategy)
    */
-  async validateUser(email: string, password: string): Promise<any> {
+  async validateUser(email: string, password: string): Promise<ValidatedUser> {
     const user = await this.prisma.user.findUnique({
       where: { email },
       select: {
@@ -40,7 +48,7 @@ export class AuthService {
       throw new UnauthorizedException('Please sign in with your OAuth provider');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await argon2.verify(user.password, password);
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
@@ -100,7 +108,7 @@ export class AuthService {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(signUpDto.password, 10);
+    const hashedPassword = await argon2.hash(signUpDto.password);
 
     // Create user
     const user = await this.prisma.user.create({
@@ -198,7 +206,6 @@ export class AuthService {
 
     return user;
   }
-}
 
   /**
    * Request password reset
@@ -215,14 +222,14 @@ export class AuthService {
 
     // Generate reset token
     const token = crypto.randomBytes(32).toString('hex');
-    const hashedToken = await bcrypt.hash(token, 10);
+    const hashedToken = await argon2.hash(token);
 
     // Save token to database (expires in 1 hour)
     await this.prisma.passwordResetToken.create({
       data: {
         token: hashedToken,
         userId: user.id,
-        expiresAt: new Date(Date.now() + 3600000), // 1 hour
+        expiry: new Date(Date.now() + 3600000), // 1 hour
       },
     });
 
@@ -244,7 +251,7 @@ export class AuthService {
     // Find valid token
     const resetTokens = await this.prisma.passwordResetToken.findMany({
       where: {
-        expiresAt: {
+        expiry: {
           gt: new Date(),
         },
       },
@@ -255,10 +262,15 @@ export class AuthService {
 
     let validToken = null;
     for (const resetToken of resetTokens) {
-      const isValid = await bcrypt.compare(token, resetToken.token);
-      if (isValid) {
-        validToken = resetToken;
-        break;
+      try {
+        const isValid = await argon2.verify(resetToken.token, token);
+        if (isValid) {
+          validToken = resetToken;
+          break;
+        }
+      } catch (error) {
+        // Invalid token format, continue to next
+        continue;
       }
     }
 
@@ -267,7 +279,7 @@ export class AuthService {
     }
 
     // Hash new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await argon2.hash(newPassword);
 
     // Update password
     await this.prisma.user.update({

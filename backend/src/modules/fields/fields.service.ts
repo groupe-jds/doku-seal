@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service';
-import { AddFieldDto, UpdateFieldDto } from './dto';
-import { nanoid } from 'nanoid';
+import type { PrismaService } from '../../database/prisma.service';
+import type { AddFieldDto, UpdateFieldDto } from './dto';
+import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class FieldsService {
@@ -19,6 +19,9 @@ export class FieldsService {
         teamId,
         deletedAt: null,
       },
+      include: {
+        envelopeItems: true,
+      },
     });
 
     if (!envelope) {
@@ -30,10 +33,16 @@ export class FieldsService {
       throw new ForbiddenException('Cannot add fields to envelope that has been sent');
     }
 
+    // Get the first envelope item (or create one if none exists)
+    const envelopeItem = envelope.envelopeItems[0];
+    if (!envelopeItem) {
+      throw new NotFoundException('Envelope must have at least one document item');
+    }
+
     // Verify recipient exists and belongs to this envelope
     const recipient = await this.prisma.recipient.findFirst({
       where: {
-        id: dto.recipientId,
+        id: parseInt(dto.recipientId, 10),
         envelopeId: dto.envelopeId,
       },
     });
@@ -45,16 +54,17 @@ export class FieldsService {
     // Create field
     const field = await this.prisma.field.create({
       data: {
-        id: nanoid(),
         type: dto.type,
-        pageNumber: dto.pageNumber,
-        pageX: dto.pageX,
-        pageY: dto.pageY,
-        pageWidth: dto.pageWidth,
-        pageHeight: dto.pageHeight,
-        required: dto.required ?? true,
-        recipientId: dto.recipientId,
-        documentId: envelope.documentId,
+        page: dto.pageNumber,
+        positionX: dto.pageX,
+        positionY: dto.pageY,
+        width: dto.pageWidth,
+        height: dto.pageHeight,
+        customText: '',
+        inserted: false,
+        recipientId: parseInt(dto.recipientId, 10),
+        envelopeId: dto.envelopeId,
+        envelopeItemId: envelopeItem.id,
       },
     });
 
@@ -67,23 +77,15 @@ export class FieldsService {
   async update(fieldId: string, userId: number, teamId: number, dto: UpdateFieldDto) {
     const field = await this.prisma.field.findFirst({
       where: {
-        id: fieldId,
-        document: {
-          envelopes: {
-            some: {
-              userId,
-              teamId,
-              deletedAt: null,
-            },
-          },
+        id: parseInt(fieldId, 10),
+        envelope: {
+          userId,
+          teamId,
+          deletedAt: null,
         },
       },
       include: {
-        document: {
-          include: {
-            envelopes: true,
-          },
-        },
+        envelope: true,
       },
     });
 
@@ -92,8 +94,7 @@ export class FieldsService {
     }
 
     // Cannot update if already sent
-    const envelope = field.document.envelopes[0];
-    if (envelope?.status !== 'DRAFT') {
+    if (field.envelope.status !== 'DRAFT') {
       throw new ForbiddenException('Cannot update field after envelope has been sent');
     }
 
@@ -101,8 +102,8 @@ export class FieldsService {
     if (dto.recipientId) {
       const recipient = await this.prisma.recipient.findFirst({
         where: {
-          id: dto.recipientId,
-          envelopeId: envelope.id,
+          id: parseInt(dto.recipientId, 10),
+          envelopeId: field.envelope.id,
         },
       });
 
@@ -111,18 +112,32 @@ export class FieldsService {
       }
     }
 
+    const updateData: Prisma.FieldUpdateInput = {};
+    if (dto.recipientId) {
+      updateData.recipientId = parseInt(dto.recipientId, 10);
+    }
+    if (dto.type) {
+      updateData.type = dto.type;
+    }
+    if (dto.pageNumber !== undefined) {
+      updateData.page = dto.pageNumber;
+    }
+    if (dto.pageX !== undefined) {
+      updateData.positionX = dto.pageX;
+    }
+    if (dto.pageY !== undefined) {
+      updateData.positionY = dto.pageY;
+    }
+    if (dto.pageWidth !== undefined) {
+      updateData.width = dto.pageWidth;
+    }
+    if (dto.pageHeight !== undefined) {
+      updateData.height = dto.pageHeight;
+    }
+
     const updated = await this.prisma.field.update({
-      where: { id: fieldId },
-      data: {
-        recipientId: dto.recipientId,
-        type: dto.type,
-        pageNumber: dto.pageNumber,
-        pageX: dto.pageX,
-        pageY: dto.pageY,
-        pageWidth: dto.pageWidth,
-        pageHeight: dto.pageHeight,
-        required: dto.required,
-      },
+      where: { id: parseInt(fieldId, 10) },
+      data: updateData,
     });
 
     return updated;
@@ -134,23 +149,15 @@ export class FieldsService {
   async remove(fieldId: string, userId: number, teamId: number) {
     const field = await this.prisma.field.findFirst({
       where: {
-        id: fieldId,
-        document: {
-          envelopes: {
-            some: {
-              userId,
-              teamId,
-              deletedAt: null,
-            },
-          },
+        id: parseInt(fieldId, 10),
+        envelope: {
+          userId,
+          teamId,
+          deletedAt: null,
         },
       },
       include: {
-        document: {
-          include: {
-            envelopes: true,
-          },
-        },
+        envelope: true,
       },
     });
 
@@ -159,13 +166,12 @@ export class FieldsService {
     }
 
     // Cannot remove if already sent
-    const envelope = field.document.envelopes[0];
-    if (envelope?.status !== 'DRAFT') {
+    if (field.envelope.status !== 'DRAFT') {
       throw new ForbiddenException('Cannot remove field after envelope has been sent');
     }
 
     await this.prisma.field.delete({
-      where: { id: fieldId },
+      where: { id: parseInt(fieldId, 10) },
     });
 
     return { message: 'Field removed successfully' };

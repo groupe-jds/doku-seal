@@ -1,16 +1,16 @@
-import {
+import type {
   CreateEnvelopeSchema,
   UpdateEnvelopeSchema,
   SendEnvelopeSchema,
   ListEnvelopesSchema,
 } from '@doku-seal/validators';
-import { z } from 'zod';
+import type { z } from 'zod';
 
 // DTOs from validators
 export class CreateEnvelopeDto implements z.infer<typeof CreateEnvelopeSchema> {
   title: string;
   externalId?: string;
-  visibility: 'EVERYONE' | 'TEAM' | 'MANAGER_AND_ABOVE';
+  visibility: 'EVERYONE' | 'MANAGER_AND_ABOVE' | 'ADMIN';
   recipients: Array<{
     email: string;
     name: string;
@@ -26,7 +26,7 @@ export class CreateEnvelopeDto implements z.infer<typeof CreateEnvelopeSchema> {
 
 export class UpdateEnvelopeDto implements z.infer<typeof UpdateEnvelopeSchema> {
   title?: string;
-  visibility?: 'EVERYONE' | 'TEAM' | 'MANAGER_AND_ABOVE';
+  visibility?: 'EVERYONE' | 'MANAGER_AND_ABOVE' | 'ADMIN';
   subject?: string;
   message?: string;
   redirectUrl?: string;

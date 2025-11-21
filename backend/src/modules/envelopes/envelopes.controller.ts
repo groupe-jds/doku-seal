@@ -12,16 +12,12 @@ import {
   UploadedFile,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
-import { EnvelopesService } from './envelopes.service';
-import { CreateEnvelopeDto, UpdateEnvelopeDto, ListEnvelopesDto, SendEnvelopeDto } from './dto';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import type { EnvelopesService } from './envelopes.service';
+import type { CreateEnvelopeDto, UpdateEnvelopeDto, ListEnvelopesDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { CurrentUserPayload } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('envelopes')
 @Controller('envelopes')
@@ -37,7 +33,7 @@ export class EnvelopesController {
     description: 'Envelope created successfully',
   })
   async create(
-    @CurrentUser() user: any,
+    @CurrentUser() user: CurrentUserPayload,
     @Body() createEnvelopeDto: CreateEnvelopeDto,
   ) {
     // TODO: Get teamId from user context or request
@@ -51,10 +47,7 @@ export class EnvelopesController {
     status: 200,
     description: 'Envelopes retrieved successfully',
   })
-  async findAll(
-    @CurrentUser() user: any,
-    @Query() query: ListEnvelopesDto,
-  ) {
+  async findAll(@CurrentUser() user: CurrentUserPayload, @Query() query: ListEnvelopesDto) {
     const teamId = 1; // Hardcoded for now
     return this.envelopesService.findAll(user.userId, teamId, query);
   }
@@ -69,10 +62,7 @@ export class EnvelopesController {
     status: 404,
     description: 'Envelope not found',
   })
-  async findOne(
-    @CurrentUser() user: any,
-    @Param('id') id: string,
-  ) {
+  async findOne(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     const teamId = 1; // Hardcoded for now
     return this.envelopesService.findOne(id, user.userId, teamId);
   }
@@ -88,7 +78,7 @@ export class EnvelopesController {
     description: 'Envelope not found',
   })
   async update(
-    @CurrentUser() user: any,
+    @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,
     @Body() updateEnvelopeDto: UpdateEnvelopeDto,
   ) {
@@ -106,10 +96,7 @@ export class EnvelopesController {
     status: 404,
     description: 'Envelope not found',
   })
-  async remove(
-    @CurrentUser() user: any,
-    @Param('id') id: string,
-  ) {
+  async remove(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     const teamId = 1; // Hardcoded for now
     return this.envelopesService.remove(id, user.userId, teamId);
   }
@@ -122,7 +109,7 @@ export class EnvelopesController {
     description: 'Document uploaded successfully',
   })
   async uploadDocument(
-    @CurrentUser() user: any,
+    @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
@@ -144,10 +131,7 @@ export class EnvelopesController {
     status: 403,
     description: 'Envelope cannot be sent',
   })
-  async send(
-    @CurrentUser() user: any,
-    @Param('id') id: string,
-  ) {
+  async send(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     const teamId = 1; // Hardcoded for now
     return this.envelopesService.send(id, user.userId, teamId);
   }

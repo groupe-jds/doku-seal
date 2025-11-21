@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
-import { PrismaService } from '../../database/prisma.service';
-import { AddRecipientDto, UpdateRecipientDto } from './dto';
-import { nanoid } from 'nanoid';
+import type { PrismaService } from '../../database/prisma.service';
+import type { AddRecipientDto, UpdateRecipientDto } from './dto';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class RecipientsService {
@@ -34,13 +34,16 @@ export class RecipientsService {
       throw new ForbiddenException('Cannot add recipients to envelope that has been sent');
     }
 
+    // Generate token for recipient
+    const token = crypto.randomBytes(32).toString('hex');
+
     // Create recipient
     const recipient = await this.prisma.recipient.create({
       data: {
-        id: nanoid(),
         email: dto.email,
         name: dto.name,
         role: dto.role,
+        token,
         envelopeId: dto.envelopeId,
         signingOrder:
           envelope.documentMeta.signingOrder === 'SEQUENTIAL'
@@ -58,7 +61,7 @@ export class RecipientsService {
   async update(recipientId: string, userId: number, teamId: number, dto: UpdateRecipientDto) {
     const recipient = await this.prisma.recipient.findFirst({
       where: {
-        id: recipientId,
+        id: parseInt(recipientId, 10),
         envelope: {
           userId,
           teamId,
@@ -80,7 +83,7 @@ export class RecipientsService {
     }
 
     const updated = await this.prisma.recipient.update({
-      where: { id: recipientId },
+      where: { id: parseInt(recipientId, 10) },
       data: {
         name: dto.name,
         role: dto.role,
@@ -96,7 +99,7 @@ export class RecipientsService {
   async remove(recipientId: string, userId: number, teamId: number) {
     const recipient = await this.prisma.recipient.findFirst({
       where: {
-        id: recipientId,
+        id: parseInt(recipientId, 10),
         envelope: {
           userId,
           teamId,
@@ -118,7 +121,7 @@ export class RecipientsService {
     }
 
     await this.prisma.recipient.delete({
-      where: { id: recipientId },
+      where: { id: parseInt(recipientId, 10) },
     });
 
     return { message: 'Recipient removed successfully' };

@@ -38,5 +38,11 @@ module.exports = {
         expressionWidth: 60,
       },
     },
+    {
+      files: ['*.ts', '*.tsx', '*.cts', '*.mts'],
+      options: {
+        parser: 'babel-ts',
+      },
+    },
   ],
 };

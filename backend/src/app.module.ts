@@ -10,13 +10,19 @@ import { FieldsModule } from './modules/fields/fields.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import * as path from 'path';
 
 @Module({
   imports: [
-    // Configuration
+    // Configuration - look for .env files in root directory
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: ['.env.local', '.env'],
+      envFilePath: [
+        path.join(process.cwd(), '..', '.env.local'),
+        path.join(process.cwd(), '..', '.env'),
+        path.join(process.cwd(), '.env.local'),
+        path.join(process.cwd(), '.env'),
+      ],
     }),
 
     // Rate limiting

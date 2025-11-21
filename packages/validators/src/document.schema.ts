@@ -1,14 +1,9 @@
 import { z } from 'zod';
 
 // Document/Envelope enums
-export const DocumentStatusSchema = z.enum([
-  'DRAFT',
-  'PENDING',
-  'COMPLETED',
-  'ARCHIVED',
-]);
+export const DocumentStatusSchema = z.enum(['DRAFT', 'PENDING', 'COMPLETED', 'ARCHIVED']);
 
-export const DocumentVisibilitySchema = z.enum(['EVERYONE', 'TEAM', 'MANAGER_AND_ABOVE']);
+export const DocumentVisibilitySchema = z.enum(['EVERYONE', 'MANAGER_AND_ABOVE', 'ADMIN']);
 
 export const DocumentSigningOrderSchema = z.enum(['PARALLEL', 'SEQUENTIAL']);
 
@@ -27,7 +22,7 @@ export const CreateEnvelopeSchema = z.object({
         email: z.string().email('Invalid recipient email'),
         name: z.string().min(1, 'Recipient name is required'),
         role: z.enum(['SIGNER', 'VIEWER', 'APPROVER', 'CC']),
-      })
+      }),
     )
     .min(1, 'At least one recipient is required'),
   subject: z.string().optional(),
@@ -62,20 +57,7 @@ export const AddRecipientSchema = z.object({
 
 export type AddRecipientDto = z.infer<typeof AddRecipientSchema>;
 
-// Add Field to Document
-export const AddFieldSchema = z.object({
-  envelopeId: z.string(),
-  recipientId: z.string(),
-  type: z.enum(['SIGNATURE', 'TEXT', 'DATE', 'EMAIL', 'NAME', 'NUMBER', 'CHECKBOX', 'DROPDOWN', 'RADIO']),
-  pageNumber: z.number().int().positive(),
-  pageX: z.number().min(0).max(1),
-  pageY: z.number().min(0).max(1),
-  pageWidth: z.number().positive(),
-  pageHeight: z.number().positive(),
-  required: z.boolean().default(true),
-});
-
-export type AddFieldDto = z.infer<typeof AddFieldSchema>;
+// Add Field to Document - moved to field.schema.ts to avoid duplicate exports
 
 // Send Document
 export const SendEnvelopeSchema = z.object({

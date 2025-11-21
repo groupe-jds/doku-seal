@@ -1,22 +1,10 @@
-import {
-  Controller,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
-import { FieldsService } from './fields.service';
-import { AddFieldDto, UpdateFieldDto } from './dto';
+import { Controller, Post, Put, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import type { FieldsService } from './fields.service';
+import type { AddFieldDto, UpdateFieldDto } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import type { CurrentUserPayload } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('fields')
 @Controller('fields')
@@ -31,10 +19,7 @@ export class FieldsController {
     status: 201,
     description: 'Field added successfully',
   })
-  async add(
-    @CurrentUser() user: any,
-    @Body() dto: AddFieldDto,
-  ) {
+  async add(@CurrentUser() user: CurrentUserPayload, @Body() dto: AddFieldDto) {
     const teamId = 1; // Hardcoded for now
     return this.fieldsService.add(user.userId, teamId, dto);
   }
@@ -46,7 +31,7 @@ export class FieldsController {
     description: 'Field updated successfully',
   })
   async update(
-    @CurrentUser() user: any,
+    @CurrentUser() user: CurrentUserPayload,
     @Param('id') id: string,
     @Body() dto: UpdateFieldDto,
   ) {
@@ -60,10 +45,7 @@ export class FieldsController {
     status: 200,
     description: 'Field removed successfully',
   })
-  async remove(
-    @CurrentUser() user: any,
-    @Param('id') id: string,
-  ) {
+  async remove(@CurrentUser() user: CurrentUserPayload, @Param('id') id: string) {
     const teamId = 1; // Hardcoded for now
     return this.fieldsService.remove(id, user.userId, teamId);
   }

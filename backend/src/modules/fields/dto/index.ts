@@ -1,5 +1,5 @@
-import { AddFieldSchema, UpdateFieldSchema } from '@doku-seal/validators';
-import { z } from 'zod';
+import type { AddFieldSchema, UpdateFieldSchema } from '@doku-seal/validators';
+import type { z } from 'zod';
 
 export class AddFieldDto implements z.infer<typeof AddFieldSchema> {
   envelopeId: string;

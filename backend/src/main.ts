@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, VersioningType } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
@@ -12,18 +12,18 @@ async function bootstrap() {
   // Security
   app.use(helmet());
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: process.env.CORS_ORIGIN ?? 'http://localhost:3000',
     credentials: true,
   });
 
   // Global prefix
   app.setGlobalPrefix('api');
 
-  // Versioning
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: '1',
-  });
+  // Versioning - disabled for now to match frontend expectations
+  // app.enableVersioning({
+  //   type: VersioningType.URI,
+  //   defaultVersion: '1',
+  // });
 
   // Global validation pipe
   app.useGlobalPipes(
@@ -34,7 +34,7 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-    })
+    }),
   );
 
   // Swagger documentation
@@ -53,11 +53,22 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT || 3001;
+  // Backend should use port 3001, frontend uses 3000
+  // Use API_PORT or BACKEND_PORT if set, otherwise default to 3001
+  // Ignore global PORT variable if it's set to 3000 (frontend port)
+  const port = parseInt(
+    process.env.API_PORT ??
+      process.env.BACKEND_PORT ??
+      (process.env.PORT && process.env.PORT !== '3000' ? process.env.PORT : '3001'),
+    10,
+  );
   await app.listen(port);
 
   console.log(`🚀 Doku-Seal API is running on: http://localhost:${port}/api`);
   console.log(`📚 Swagger docs available at: http://localhost:${port}/api/docs`);
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('Failed to start application:', error);
+  process.exit(1);
+});

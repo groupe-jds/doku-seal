@@ -3,10 +3,11 @@
   "version": "2.0.13",
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev --filter=@doku-seal/remix",
+    "dev": "turbo run dev --filter=@doku-seal/frontend --filter=@doku-seal/backend",
     "dev:remix": "turbo run dev --filter=@doku-seal/remix",
     "dev:web": "turbo run dev --filter=@doku-seal/frontend",
     "dev:api": "turbo run dev --filter=@doku-seal/backend",
+    "dev:next": "turbo run dev --filter=@doku-seal/frontend --filter=@doku-seal/backend",
     "dev:docs": "turbo run dev --filter=@doku-seal/documentation",
     "dev:openpage-api": "turbo run dev --filter=@doku-seal/openpage-api",
     "start": "turbo run start --filter=@doku-seal/remix --filter=@doku-seal/documentation --filter=@doku-seal/openpage-api",
