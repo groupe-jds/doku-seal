@@ -91,7 +91,10 @@ export class EnvelopesService {
     };
 
     if (status) {
-      where.status = status;
+      // Filter out ARCHIVED as it's not in Prisma schema (only DRAFT, PENDING, COMPLETED, REJECTED)
+      if (status !== 'ARCHIVED') {
+        where.status = status as 'DRAFT' | 'PENDING' | 'COMPLETED' | 'REJECTED';
+      }
     }
 
     if (folderId) {

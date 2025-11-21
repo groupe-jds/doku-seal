@@ -114,7 +114,11 @@ export class FieldsService {
 
     const updateData: Prisma.FieldUpdateInput = {};
     if (dto.recipientId) {
-      updateData.recipientId = parseInt(dto.recipientId, 10);
+      updateData.recipient = {
+        connect: {
+          id: parseInt(dto.recipientId, 10),
+        },
+      };
     }
     if (dto.type) {
       updateData.type = dto.type;
